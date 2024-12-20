@@ -1,0 +1,11 @@
+[package]
+name = "cfd-checklist"
+version = "0.1.0"
+edition = "2021"
+description = "Check CFD parameters against CFD checklist "
+
+[dependencies]
+anyhow = "1.0.94"
+clap = { version = "4.5.23", features = ["derive"] }
+quick-xml = "0.37.1"
+thiserror = "2.0.6"
