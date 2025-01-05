@@ -76,3 +76,51 @@ pub fn match_report_to_case(file: &str, case: &str) -> Result<(), CfdCheckListEr
         }
     }
 }
+
+#[derive(Debug, Default, Clone)]
+pub struct Case {
+    // name: String,
+    zen: u32,
+    az: u32,
+    config: String,
+    // wind_speed: u32,
+}
+impl Case {
+    pub fn new(name: &str) -> Self {
+        let mut case_parts = name.split("_");
+        let mut zen_az = case_parts.next().unwrap().split("az");
+        let zen = zen_az
+            .next()
+            .unwrap()
+            .strip_prefix("zen")
+            .unwrap()
+            .parse::<u32>()
+            .unwrap();
+        let az = zen_az.last().unwrap().parse::<u32>().unwrap();
+        let config = case_parts.next().unwrap().to_string();
+        // let wind_speed = case_parts
+        //     .next()
+        //     .unwrap()
+        //     .strip_suffix("ms")
+        //     .unwrap()
+        //     .parse::<u32>()
+        //     .unwrap();
+        Self {
+            // name: name.to_string(),
+            zen,
+            az,
+            config,
+            // wind_speed,
+        }
+    }
+    pub fn parts(&self) -> Vec<String> {
+        vec![
+            format!("[zen{:02}az{:02}_{}]", self.zen, self.az, self.config),
+            format!("[zen{:02}az{:03}_{}]", self.zen, self.az, self.config),
+            format!("[zen{:02}az{:02} {}]", self.zen, self.az, self.config),
+            format!("[zen{:02}az{:03} {}]", self.zen, self.az, self.config),
+            format!("[zen{:02}az{:02}{}]", self.zen, self.az, self.config),
+            format!("[zen{:02}az{:03}{}]", self.zen, self.az, self.config),
+        ]
+    }
+}

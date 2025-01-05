@@ -7,7 +7,7 @@ use std::{
 };
 
 use cfd_checklist::{
-    check_tcs, check_tcs0, match_report_to_case, CheckList, TestProperty, Tests, WindSpeed,
+    check_tcs, check_tcs0, match_report_to_case, Case, CheckList, TestProperty, Tests, WindSpeed,
 };
 
 #[derive(Parser)]
@@ -22,6 +22,9 @@ struct Cli {
     /// Write checklist report to folder
     #[arg(short, long)]
     folder: bool,
+    /// skipping the generation of the scenes views
+    #[arg(long)]
+    no_scenes: bool,
 }
 
 fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
@@ -102,6 +105,9 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             .check_ws(report)?;
         let instvol = TestProperty::new(vec![("instvol", b"commonBoundary")], b"PartSurfaces", "")
             .check_instvol(report)?;
+        let stripped_case = Case::new(&case);
+        let parts = stripped_case.parts();
+        let parts_as_str = parts.iter().map(|x| x.as_str()).collect::<Vec<_>>();
 
         let test_props = vec![
             TestProperty::new(
@@ -280,6 +286,7 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
                 b"CycleOption",
                 "AMGCycleOption.V_CYCLE",
             ),
+            TestProperty::new(vec![("Region 1", b"commonRegion")], b"Parts", parts_as_str),
         ];
         let mut checklist = CheckList::try_from(Tests::new(report, test_props))?;
         checklist.push(tcs);
@@ -305,7 +312,7 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             None
         };
 
-        if checklist.pass() {
+        if !cli.no_scenes && checklist.pass() {
             println!("Writing RI_tel, RI_wind, vort_tel, vort_wind hardcopies ...");
             let _output =
                 Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
