@@ -1,33 +1,50 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
-    process::Command,
 };
 
-use cfd_checklist::{
-    check_tcs, check_tcs0, match_report_to_case, Case, CheckList, TestProperty, Tests, WindSpeed,
+use cfdsim::{
+    check_tcs, check_tcs0, match_report_to_case, Case, CheckList, Macro, TestProperty, Tests,
+    WindSpeed,
 };
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
     /// Full path to a CFD sim file
-    #[arg(short, long)]
     case: String,
-    /// Path to the CFD summary XML report
-    #[arg(short, long)]
-    report: Option<String>,
-    /// Write checklist report to folder
-    #[arg(short, long)]
-    folder: bool,
-    /// skipping the generation of the scenes views
-    #[arg(long)]
-    no_scenes: bool,
+    #[command(subcommand)]
+    command: Commands,
 }
 
-fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
+#[derive(Subcommand)]
+enum Commands {
+    Check {
+        /// Path to the CFD summary XML report
+        #[arg(short, long)]
+        report: Option<String>,
+        /// Write checklist report to folder
+        #[arg(short, long)]
+        folder: bool,
+        /// skipping the generation of the scenes views
+        #[arg(long)]
+        no_scenes: bool,
+    },
+    PlayMacro {
+        /// Full path to the java macro
+        java: String,
+    },
+}
+
+fn checklist(
+    case_path: &Path,
+    folder: bool,
+    report: Option<&str>,
+    no_scenes: bool,
+    root: PathBuf,
+) -> anyhow::Result<()> {
     if case_path.is_dir() {
         println!("Applying checklist to all sim files in {case_path:?}");
         for entry in fs::read_dir(case_path)? {
@@ -41,7 +58,9 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             }
             checklist(
                 path.as_path(),
-                cli,
+                folder,
+                report,
+                no_scenes,
                 root.join(case_path.file_name().unwrap()),
             )?;
         }
@@ -53,7 +72,7 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             .to_string_lossy()
             .into_owned();
 
-        if cli.folder {
+        if folder {
             if root.join(format!("{case}@PASS")).is_dir() {
                 println!("found existing folder: {case}@PASS, skipping {case}");
                 return Ok(());
@@ -64,24 +83,27 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             }
         };
 
-        let report = if let Some(report) = cli.report.as_ref() {
+        let report = if let Some(report) = report.as_ref() {
             report
         } else {
             println!("Building report for {case} ...");
-            let _output =
-                Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
-                    .args([
-                        "-batch",
-                        "-power",
-                        "-podkey",
-                        "wRCyd2S8PCE/6aG6NyauIw",
-                        "-licpath",
-                        "1999@flex.cd-adapco.com",
-                        "/home/ubuntu/Desktop/report.java",
-                    ])
-                    .arg(case_path)
-                    .output()
-                    .expect(&format!("failed to build report for {case}"));
+            // let _output =
+            //     Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
+            //         .args([
+            //             "-batch",
+            //             "-power",
+            //             "-podkey",
+            //             "wRCyd2S8PCE/6aG6NyauIw",
+            //             "-licpath",
+            //             "1999@flex.cd-adapco.com",
+            //             "/home/ubuntu/Desktop/report.java",
+            //         ])
+            //         .arg(case_path)
+            //         .output()
+            //         .expect(&format!("failed to build report for {case}"));
+            Macro::new(case_path, "/home/ubuntu/Desktop/report.java")
+                .play()
+                .expect(&format!("failed to build report for {case}"));
             println!(r#"{case} report saved in "/tmp/report.xml""#);
             // println!("{:#?}", output);
             "/tmp/report.xml"
@@ -295,7 +317,7 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
         checklist.push(ws);
         checklist.push(instvol);
 
-        let folder_path = if cli.folder {
+        let folder_path = if folder {
             let folder = format!(
                 "{case}@{}",
                 checklist.pass().then_some("PASS").unwrap_or("FAIL")
@@ -312,22 +334,25 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
             None
         };
 
-        if !cli.no_scenes && checklist.pass() {
+        if !no_scenes && checklist.pass() {
             println!("Writing RI_tel, RI_wind, vort_tel, vort_wind hardcopies ...");
-            let _output =
-                Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
-                    .args([
-                        "-batch",
-                        "-power",
-                        "-podkey",
-                        "wRCyd2S8PCE/6aG6NyauIw",
-                        "-licpath",
-                        "1999@flex.cd-adapco.com",
-                        "/home/ubuntu/Desktop/scenes_views.java",
-                    ])
-                    .arg(case_path)
-                    .output()
-                    .expect(&format!("failed to build report for {case}"));
+            // let _output =
+            //     Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
+            //         .args([
+            //             "-batch",
+            //             "-power",
+            //             "-podkey",
+            //             "wRCyd2S8PCE/6aG6NyauIw",
+            //             "-licpath",
+            //             "1999@flex.cd-adapco.com",
+            //             "/home/ubuntu/Desktop/scenes_views.java",
+            //         ])
+            //         .arg(case_path)
+            //         .output()
+            //         .expect(&format!("failed to build report for {case}"));
+            Macro::new(case_path, "/home/ubuntu/Desktop/scene_views.java")
+                .play()
+                .expect(&format!("failed to generate scenes {case}"));
             for scene in ["RI_tel", "RI_wind", "vort_tel", "vort_wind"] {
                 let root = Path::new(env!("HOME")).join("Desktop");
                 if let Err(e) = fs::rename(
@@ -348,7 +373,24 @@ fn checklist(case_path: &Path, cli: &Cli, root: PathBuf) -> anyhow::Result<()> {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let case_path = Path::new(&cli.case);
-    let root = Path::new(env!("HOME")).join("Desktop");
-    checklist(case_path, &cli, root)?;
+    match cli.command {
+        Commands::Check {
+            report,
+            folder,
+            no_scenes,
+        } => {
+            let root = Path::new(env!("HOME")).join("Desktop");
+            checklist(
+                case_path,
+                folder,
+                report.as_ref().map(|r| r.as_str()),
+                no_scenes,
+                root,
+            )?;
+        }
+        Commands::PlayMacro { java } => {
+            Macro::new(case_path, &java).play()?;
+        }
+    }
     Ok(())
 }

@@ -4,13 +4,18 @@ use quick_xml::{events::Event, Reader};
 mod checklist;
 mod coordinate_systems;
 mod expectation;
+mod play_macro;
 mod test_properties;
 mod wind_speed;
 pub use checklist::{Check, CheckList};
 pub use coordinate_systems::{check_tcs, check_tcs0};
 pub use expectation::Expectation;
+pub use play_macro::Macro;
 pub use test_properties::TestProperty;
 pub use wind_speed::WindSpeed;
+
+pub static STARCCM: &str = "/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+";
+pub static PODKEY: &str = "wRCyd2S8PCE/6aG6NyauIw";
 
 #[derive(Debug, thiserror::Error)]
 pub enum CfdCheckListError {
