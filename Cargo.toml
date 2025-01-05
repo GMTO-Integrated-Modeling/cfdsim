@@ -1,8 +1,8 @@
 [package]
-name = "cfd-checklist"
+name = "cfdsim"
 version = "0.1.0"
 edition = "2021"
-description = "Check CFD parameters against CFD checklist "
+description = "CLI for GMT CFD STARCCM+ sim file"
 
 [dependencies]
 anyhow = "1.0.94"
