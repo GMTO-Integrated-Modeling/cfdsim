@@ -1,3 +1,5 @@
+use std::{env, sync::LazyLock};
+
 use anyhow::Result;
 use quick_xml::{events::Event, Reader};
 
@@ -14,8 +16,16 @@ pub use play_macro::Macro;
 pub use test_properties::TestProperty;
 pub use wind_speed::WindSpeed;
 
-pub static STARCCM: &str = "/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+";
-pub static PODKEY: &str = "wRCyd2S8PCE/6aG6NyauIw";
+/// Path to the STARCCM+ binary
+pub static STARCCM: LazyLock<String> = LazyLock::new(|| {
+    let starcmm = env::var("STARCCM")
+        .unwrap_or("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+".to_string());
+    println!("Using: {starcmm}");
+    starcmm
+});
+/// Path to the STARCCM+ java macro
+pub static STARCCM_MACROS: LazyLock<String> =
+    LazyLock::new(|| env::var("STARCCM_MACROS").unwrap_or("/home/ubuntu/Desktop/".to_string()));
 
 #[derive(Debug, thiserror::Error)]
 pub enum CfdCheckListError {

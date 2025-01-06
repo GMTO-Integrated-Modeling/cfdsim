@@ -7,7 +7,7 @@ use std::{
 
 use cfdsim::{
     check_tcs, check_tcs0, match_report_to_case, Case, CheckList, Macro, TestProperty, Tests,
-    WindSpeed,
+    WindSpeed, STARCCM_MACROS,
 };
 
 #[derive(Parser)]
@@ -21,6 +21,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Checks some properties of the CFD model
     Check {
         /// Path to the CFD summary XML report
         #[arg(short, long)]
@@ -32,6 +33,7 @@ enum Commands {
         #[arg(long)]
         no_scenes: bool,
     },
+    /// Executes a java macro
     PlayMacro {
         /// Full path to the java macro
         java: String,
@@ -87,21 +89,7 @@ fn checklist(
             report
         } else {
             println!("Building report for {case} ...");
-            // let _output =
-            //     Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
-            //         .args([
-            //             "-batch",
-            //             "-power",
-            //             "-podkey",
-            //             "wRCyd2S8PCE/6aG6NyauIw",
-            //             "-licpath",
-            //             "1999@flex.cd-adapco.com",
-            //             "/home/ubuntu/Desktop/report.java",
-            //         ])
-            //         .arg(case_path)
-            //         .output()
-            //         .expect(&format!("failed to build report for {case}"));
-            Macro::new(case_path, "/home/ubuntu/Desktop/report.java")
+            Macro::new(case_path, Path::new(&*STARCCM_MACROS).join("report.java"))?
                 .play()
                 .expect(&format!("failed to build report for {case}"));
             println!(r#"{case} report saved in "/tmp/report.xml""#);
@@ -336,23 +324,12 @@ fn checklist(
 
         if !no_scenes && checklist.pass() {
             println!("Writing RI_tel, RI_wind, vort_tel, vort_wind hardcopies ...");
-            // let _output =
-            //     Command::new("/opt/Siemens/17.06.007/STAR-CCM+17.06.007/star/bin/starccm+")
-            //         .args([
-            //             "-batch",
-            //             "-power",
-            //             "-podkey",
-            //             "wRCyd2S8PCE/6aG6NyauIw",
-            //             "-licpath",
-            //             "1999@flex.cd-adapco.com",
-            //             "/home/ubuntu/Desktop/scenes_views.java",
-            //         ])
-            //         .arg(case_path)
-            //         .output()
-            //         .expect(&format!("failed to build report for {case}"));
-            Macro::new(case_path, "/home/ubuntu/Desktop/scene_views.java")
-                .play()
-                .expect(&format!("failed to generate scenes {case}"));
+            Macro::new(
+                case_path,
+                Path::new(&*STARCCM_MACROS).join("scene_views.java"),
+            )?
+            .play()
+            .expect(&format!("failed to generate scenes {case}"));
             for scene in ["RI_tel", "RI_wind", "vort_tel", "vort_wind"] {
                 let root = Path::new(env!("HOME")).join("Desktop");
                 if let Err(e) = fs::rename(
@@ -389,7 +366,7 @@ fn main() -> anyhow::Result<()> {
             )?;
         }
         Commands::PlayMacro { java } => {
-            Macro::new(case_path, &java).play()?;
+            Macro::new(case_path, &java)?.play()?;
         }
     }
     Ok(())
