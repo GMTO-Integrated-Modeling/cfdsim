@@ -58,10 +58,10 @@ impl Macro {
         if stdout.contains("Server process ended unexpectedly") {
             return Err(MacroError::StdOut(stdout));
         }
-        let stderr = String::from_utf8(output.stderr)?;
-        if !stderr.is_empty() {
-            return Err(MacroError::StdErr(stderr));
-        }
+        // let stderr = String::from_utf8(output.stderr)?;
+        // if !stderr.is_empty() {
+        //     return Err(MacroError::StdErr(stderr));
+        // }
         Ok(())
     }
 }

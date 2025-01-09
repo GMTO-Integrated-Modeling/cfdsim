@@ -136,6 +136,12 @@ impl Case {
             format!("[zen{:02}az{:03} {}]", self.zen, self.az, self.config),
             format!("[zen{:02}az{:02}{}]", self.zen, self.az, self.config),
             format!("[zen{:02}az{:03}{}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:02}_{}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:03}_{}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:02} {}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:03} {}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:02}{}]", self.zen, self.az, self.config),
+            format!("[zen{:03}az{:03}{}]", self.zen, self.az, self.config),
         ]
     }
 }

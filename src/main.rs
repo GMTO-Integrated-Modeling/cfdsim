@@ -314,7 +314,7 @@ fn checklist(
             println!("Writing checklist to {folder_path:?}");
             fs::create_dir_all(&folder_path)?;
             let mut file = File::create(folder_path.join("checklist.txt"))?;
-            write!(&mut file, "CHECKING {:}", case.to_lowercase())?;
+            writeln!(&mut file, "CHECKING {:}", case.to_lowercase())?;
             write!(&mut file, "{checklist}")?;
             Some(folder_path)
         } else {
@@ -326,7 +326,7 @@ fn checklist(
             println!("Writing RI_tel, RI_wind, vort_tel, vort_wind hardcopies ...");
             Macro::new(
                 case_path,
-                Path::new(&*STARCCM_MACROS).join("scene_views.java"),
+                Path::new(&*STARCCM_MACROS).join("scenes_views.java"),
             )?
             .play()
             .expect(&format!("failed to generate scenes {case}"));

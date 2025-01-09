@@ -46,7 +46,7 @@ impl WindSpeed {
     pub fn u_max(&self) -> Vec<&str> {
         match self {
             WindSpeed::Two => vec!["1.2*.922", "1.2*0.922"],
-            WindSpeed::Seven => vec!["4*.954", "4*0.954"],
+            WindSpeed::Seven => vec!["4*.954", "4*0.954", "4 *.954", "4 *0.954"],
             WindSpeed::Twelve => vec!["7*.978", "7*0.978"],
             WindSpeed::Seventeen => vec!["10*.978", "10*0.978"],
         }
