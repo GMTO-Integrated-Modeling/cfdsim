@@ -297,6 +297,11 @@ fn checklist(
                 "AMGCycleOption.V_CYCLE",
             ),
             TestProperty::new(vec![("Region 1", b"commonRegion")], b"Parts", parts_as_str),
+            TestProperty::new(
+                vec![("Trimmer", b"trimmerTrimmerMeshingModel")],
+                b"CoordinateSystem",
+                "Laboratory-&gt;TCS",
+            ),
         ];
         let mut checklist = CheckList::try_from(Tests::new(report, test_props))?;
         checklist.push(tcs);

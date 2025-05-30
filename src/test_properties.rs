@@ -89,7 +89,9 @@ impl<'a> TestProperty<'a> {
                         }
                     }
                     Event::Eof => {
-                        return Err(CfdCheckListError::Setting(String::new()));
+                        return Err(CfdCheckListError::Setting(
+                            String::from_utf8(event.to_vec()).unwrap(),
+                        ));
                     }
                     _ => (),
                 }
