@@ -300,7 +300,7 @@ fn checklist(
             TestProperty::new(
                 vec![("Trimmer", b"trimmerTrimmerMeshingModel")],
                 b"CoordinateSystem",
-                "Laboratory-&gt;TCS",
+                "Laboratory->TCS",
             ),
         ];
         let mut checklist = CheckList::try_from(Tests::new(report, test_props))?;
