@@ -6,8 +6,8 @@ use std::{
 };
 
 use cfdsim::{
-    check_tcs, check_tcs0, match_report_to_case, Case, CheckList, Macro, TestProperty, Tests,
-    WindSpeed, STARCCM_MACROS,
+    Case, CheckList, Macro, STARCCM_MACROS, TestProperty, Tests, WindSpeed, check_tcs, check_tcs0,
+    match_report_to_case,
 };
 
 #[derive(Parser)]

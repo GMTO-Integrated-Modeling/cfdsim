@@ -1,7 +1,7 @@
 use std::{env, sync::LazyLock};
 
 use anyhow::Result;
-use quick_xml::{events::Event, Reader};
+use quick_xml::{Reader, events::Event};
 
 mod checklist;
 mod coordinate_systems;
