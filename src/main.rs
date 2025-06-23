@@ -98,7 +98,10 @@ fn checklist(
         };
         match_report_to_case(report, &case)?;
 
-        let wind_speed = WindSpeed::new(&case)?;
+        let Ok(wind_speed) = WindSpeed::new(&case) else {
+            eprintln!("failed to parse wind speed from {case}");
+            return Ok(());
+        };
         let duration = wind_speed.duration();
         let start = wind_speed.start();
         let scene_start = wind_speed.scene_start();

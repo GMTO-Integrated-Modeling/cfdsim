@@ -14,7 +14,7 @@ pub use coordinate_systems::{check_tcs, check_tcs0};
 pub use expectation::Expectation;
 pub use play_macro::Macro;
 pub use test_properties::TestProperty;
-pub use wind_speed::WindSpeed;
+pub use wind_speed::{WindSpeed, WindSpeedError};
 
 /// Path to the STARCCM+ binary
 pub static STARCCM: LazyLock<String> = LazyLock::new(|| {
@@ -37,10 +37,10 @@ pub enum CfdCheckListError {
     Parts(String, Vec<String>),
     #[error("report do not match case: {0}")]
     Mismatch(String),
-    #[error("found windspeed {0}ms, expected 2m/s, 7m/s, 12m/s or 17m/s")]
-    WindSpeed(u32),
-    #[error("faile to parse the XML CFD report")]
+    #[error("failed to parse the XML CFD report")]
     Xml(#[from] quick_xml::Error),
+    #[error("failed to parse wind speed from case name")]
+    WindSpeedParsing(#[from] WindSpeedError),
 }
 
 pub struct Tests<'a> {
