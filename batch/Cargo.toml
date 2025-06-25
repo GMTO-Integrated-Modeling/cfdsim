@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 anyhow.workspace = true
-cfdsim = { version = "0.1.0", path = ".." }
+cfdsim = { version = "0.3.0", path = ".." }

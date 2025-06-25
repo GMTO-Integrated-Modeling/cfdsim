@@ -3,6 +3,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
+    thread,
 };
 
 use cfdsim::{
@@ -37,6 +38,9 @@ enum Commands {
     PlayMacro {
         /// Full path to the java macro
         java: String,
+        /// Applies the macro in parallel (optionally passing the batch size)
+        #[arg(short, long, require_equals = true)]
+        batch: Option<Option<usize>>,
     },
 }
 
@@ -357,7 +361,6 @@ fn checklist(
 }
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let case_path = Path::new(&cli.case);
     match cli.command {
         Commands::Check {
             report,
@@ -365,6 +368,7 @@ fn main() -> anyhow::Result<()> {
             no_scenes,
         } => {
             let root = Path::new(env!("HOME")).join("Desktop");
+            let case_path = Path::new(&cli.case);
             checklist(
                 case_path,
                 folder,
@@ -373,8 +377,58 @@ fn main() -> anyhow::Result<()> {
                 root,
             )?;
         }
-        Commands::PlayMacro { java } => {
-            Macro::new(case_path, &java)?.play()?;
+        Commands::PlayMacro { java, batch } => {
+            let case_path = Path::new(&cli.case);
+            if case_path.is_dir() {
+                match batch {
+                    Some(None) => {
+                        let mut macros = vec![];
+                        for entry in fs::read_dir(case_path)? {
+                            let path = entry?.path();
+                            if path.is_file() {
+                                println!("applying {java} to {path:?}");
+                                macros.push(Macro::new(&path, &java)?);
+                            }
+                        }
+                        for h in macros
+                            .into_iter()
+                            .map(|r#macro| thread::spawn(|| r#macro.play()))
+                            .collect::<Vec<_>>()
+                        {
+                            h.join().unwrap()?;
+                        }
+                    }
+                    Some(Some(n)) => {
+                        let entries: Vec<_> = fs::read_dir(case_path)?.collect();
+                        for batch in entries.chunks(n) {
+                            let mut macros = vec![];
+                            for entry in batch {
+                                let path = entry.as_ref().unwrap().path();
+                                if path.is_file() {
+                                    println!("applying {java} to {path:?}");
+                                    macros.push(Macro::new(&path, &java)?);
+                                }
+                            }
+                            for h in macros
+                                .into_iter()
+                                .map(|r#macro| thread::spawn(|| r#macro.play()))
+                                .collect::<Vec<_>>()
+                            {
+                                h.join().unwrap()?;
+                            }
+                        }
+                    }
+
+                    None => {
+                        for entry in fs::read_dir(case_path)? {
+                            let path = entry?.path();
+                            Macro::new(&path, &java)?.play()?;
+                        }
+                    }
+                }
+            } else {
+                Macro::new(case_path, &java)?.play()?;
+            }
         }
     }
     Ok(())
